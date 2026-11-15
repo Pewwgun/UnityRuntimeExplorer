@@ -52,6 +52,9 @@ bool class_is_valuetype(const Class* klass);
 bool class_is_enum(const Class* klass);
 const Field* class_get_fields(const Class* klass, void** iterator);
 const Method* class_get_methods(const Class* klass, void** iterator);
+// Mono initializes a class lazily when its members are enumerated, so no explicit
+// init is needed. Provided so URK::managed::runtime_class_init resolves on both backends.
+inline void runtime_class_init(const void*) {}
 const Property* class_get_properties(const Class* klass, void** iterator);
 const Class* class_get_interfaces(const Class* klass, void** iterator);
 const Type* class_get_type(const Class* klass);

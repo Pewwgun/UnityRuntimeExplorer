@@ -29,3 +29,11 @@ jobs:
           $catalog = $messages | Where-Object id -eq 2
           if ($initialize.result.protocolVersion -ne '2025-11-25') { throw 'MCP version negotiation failed' }
           if (@($catalog.result.tools).Count -lt 31) { throw 'MCP tool catalog is incomplete' }
+      - name: Upload Explorer DLLs
+        uses: actions/upload-artifact@v4
+        with:
+          name: UnityRuntimeExplorer-DLLs
+          path: |
+            out/build/clang-release/URK_Il2cpp_UnityRuntimeExplorer.dll
+            out/build/clang-release/URK_Mono_UnityRuntimeExplorer.dll
+          if-no-files-found: error

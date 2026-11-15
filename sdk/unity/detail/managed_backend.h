@@ -118,6 +118,7 @@ struct Backend {
         auto n=z(name); const void* current=klass; std::unordered_set<const void*> parents; std::size_t depth=0;
         while (current) {
             if (depth++ >= 128 || !parents.insert(current).second) { set_error("Unity method lookup rejected a cyclic or excessive inheritance chain"); return nullptr; }
+            URK::managed::runtime_class_init(current);
             void* it=nullptr; const void* match=nullptr; const void* nonGeneric=nullptr; int matches=0; int nonGenericMatches=0; std::unordered_set<const void*> members; std::size_t member_count=0;
             while (const auto* m = URK::managed::class_get_methods(static_cast<const URK::managed::Class*>(current), &it)) {
                 if (++member_count > 32768 || !members.insert(m).second) { set_error("Unity method lookup rejected a cyclic or excessive method iterator"); return nullptr; }
@@ -142,6 +143,9 @@ struct Backend {
         auto n=z(name); int same_arity=0; std::string first_mismatch; const void* current=klass; std::unordered_set<const void*> parents; std::size_t depth=0;
         while (current) {
             if (depth++ >= 128 || !parents.insert(current).second) { set_error("Unity exact method lookup rejected a cyclic or excessive inheritance chain"); return nullptr; }
+            // IL2CPP returns an empty method list for an uninitialized class, which hides inherited
+            // methods such as UnityEngine.Object.GetInstanceID (same-arity candidates=0). No-op on Mono.
+            URK::managed::runtime_class_init(current);
             void* it=nullptr; const void* match=nullptr; int matches=0; std::unordered_set<const void*> members; std::size_t member_count=0;
             while (const auto* m = URK::managed::class_get_methods(static_cast<const URK::managed::Class*>(current), &it)) {
                 if (++member_count > 32768 || !members.insert(m).second) { set_error("Unity exact method lookup rejected a cyclic or excessive method iterator"); return nullptr; }
@@ -175,6 +179,7 @@ struct Backend {
         auto n=z(name); const void* current=klass; std::unordered_set<const void*> parents; std::size_t depth=0;
         while (current) {
             if (depth++ >= 128 || !parents.insert(current).second) { set_error("Unity field lookup rejected a cyclic or excessive inheritance chain"); return nullptr; }
+            URK::managed::runtime_class_init(current);
             void* it=nullptr; std::unordered_set<const void*> members; std::size_t member_count=0;
             while (const auto* f = URK::managed::class_get_fields(static_cast<const URK::managed::Class*>(current), &it)) { if (++member_count > 32768 || !members.insert(f).second) { set_error("Unity field lookup rejected a cyclic or excessive field iterator"); return nullptr; } const char* fn = URK::managed::field_get_name(f); if (fn && n == fn) { std::lock_guard<std::mutex> lock(cache_mutex()); field_cache()[cacheKey] = f; return f; } }
             current = URK::managed::class_get_parent(static_cast<const URK::managed::Class*>(current));
